@@ -46,7 +46,10 @@ section.mode{display:none}section.mode.on{display:block}
 .item .q{position:absolute;top:4px;right:4px;background:var(--ac);color:#fff;border-radius:99px;min-width:22px;height:22px;font-size:12px;font-weight:700;display:none;place-items:center;padding:0 6px}
 .item.has{border-color:var(--ac);background:var(--acl)}.item.has .q{display:grid}
 .cart .row{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px dashed var(--ln)}
-.cart .row .x{margin-left:auto;border:1px solid var(--ln);background:#fff;border-radius:6px;width:28px;height:28px}
+.cart .ctl{margin-left:auto;display:flex;gap:4px;align-items:center}
+.cart .row .x{border:1px solid var(--ln);background:#fff;border-radius:6px;width:30px;height:30px;font-weight:700}
+.cart .row .del{border:1px solid var(--rd);color:var(--rd);background:#fff;border-radius:6px;height:30px;padding:0 10px;font-size:13px;font-weight:700}
+.cart .clr{margin-top:8px;border:1px solid var(--ln);background:#fff;color:var(--mu);border-radius:8px;padding:5px 12px;font-size:13px}
 .cart .empty{color:var(--mu);font-size:14px}
 .pay{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}
 .pay label{border:1px solid var(--ln);border-radius:99px;padding:5px 12px;font-size:14px;background:#fff;cursor:pointer}
@@ -274,8 +277,10 @@ $$('#shelf .item').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;cart[i]=Math.m
 let busy=false;
 function renderCart(){
  const ks=Object.keys(cart).filter(k=>cart[k]>0);
- $('#cart').innerHTML=ks.length?ks.map(k=>`<div class="row"><span style="font-size:20px">${ITEMS[k].e}</span>${ITEMS[k].n} × ${cart[k]}<span style="color:var(--mu)">${yen(ITEMS[k].p*cart[k])}</span><button class="x" data-k="${k}" aria-label="1つ戻す">－</button></div>`).join(''):'<div class="empty">棚の商品をタップしてかごに入れよう。</div>';
- $$('#cart .x').forEach(b=>b.onclick=()=>{cart[b.dataset.k]--;renderCart()});
+ $('#cart').innerHTML=ks.length?ks.map(k=>`<div class="row"><span style="font-size:20px">${ITEMS[k].e}</span>${ITEMS[k].n} × ${cart[k]}<span style="color:var(--mu)">${yen(ITEMS[k].p*cart[k])}</span><span class="ctl"><button class="x" data-k="${k}" data-d="-1" aria-label="1つ減らす">－</button><button class="x" data-k="${k}" data-d="1" aria-label="1つ増やす">＋</button><button class="del" data-k="${k}">取り消し</button></span></div>`).join('')+'<button class="clr" id="btnClearCart">🗑 かごを空にする</button>':'<div class="empty">棚の商品をタップしてかごに入れよう。</div>';
+ $$('#cart .x').forEach(b=>b.onclick=()=>{if(busy)return;const k=b.dataset.k;cart[k]=Math.max(0,Math.min(9,(cart[k]||0)+(+b.dataset.d)));renderCart()});
+ $$('#cart .del').forEach(b=>b.onclick=()=>{if(busy)return;delete cart[b.dataset.k];renderCart()});
+ if($('#btnClearCart'))$('#btnClearCart').onclick=()=>{if(busy)return;Object.keys(cart).forEach(k=>delete cart[k]);renderCart()};
  $$('#shelf .item').forEach(b=>{const q=cart[b.dataset.i]||0;b.classList.toggle('has',q>0);b.querySelector('.q').textContent=q});
  $('#cartTotal').textContent=yen(ks.reduce((s,k)=>s+ITEMS[k].p*cart[k],0));
  $('#btnCheckout').disabled=!ks.length||busy;
